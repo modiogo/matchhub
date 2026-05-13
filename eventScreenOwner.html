@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MatchHub — Event (Owner)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: #171717;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1280 900' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cg transform='matrix(13.56 44.562 -98.765 33.548 59.807 110.88)' opacity='0.20'%3E%3Crect height='35.55' width='250.64' fill='url(%23grad)' id='quad' shape-rendering='crispEdges'/%3E%3Cuse href='%23quad' transform='scale(1 -1)'/%3E%3Cuse href='%23quad' transform='scale(-1 1)'/%3E%3Cuse href='%23quad' transform='scale(-1 -1)'/%3E%3C/g%3E%3Cdefs%3E%3ClinearGradient id='grad' gradientUnits='userSpaceOnUse' x2='5' y2='5'%3E%3Cstop stop-color='rgba(50,53,251,1)' offset='0'/%3E%3Cstop stop-color='rgba(42,45,197,0.75)' offset='0.25'/%3E%3Cstop stop-color='rgba(35,37,139,0.5)' offset='0.5'/%3E%3Cstop stop-color='rgba(27,28,81,0.25)' offset='0.75'/%3E%3Cstop stop-color='rgba(23,23,23,0)' offset='1'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E");
+      background-size: 100% 100%;
+      background-attachment: fixed;
+    }
+
+    .es-root {
+      width: 100%;
+      min-height: 100vh;
+      background: transparent;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ══════════════════════════════════════════
+       MATCH ID MODAL
+    ══════════════════════════════════════════ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-backdrop.is-open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 500px;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: rgba(28,28,28,0.80);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border-radius: 24px 24px 0 0;
+      padding: 32px 0 48px;
+      position: relative;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.34, 1.1, 0.64, 1);
+    }
+    .modal-backdrop.is-open .modal-sheet {
+      transform: translateY(0);
+    }
+
+    /* ── Desktop: centred pop-up — same as homepage Sign Up dialog ── */
+    @media (min-width: 768px) {
+      .modal-backdrop {
+        align-items: center;
+      }
+      .modal-sheet {
+        max-width: 406px;
+        background: rgba(28,28,28,0.60);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border: 1px solid #323232;
+        border-radius: 24px;
+        padding: 32px 0 32px;
+        transform: translateY(16px) scale(0.97);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.34, 1.1, 0.64, 1), opacity 0.3s ease;
+      }
+      .modal-backdrop.is-open .modal-sheet {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      .modal-handle { display: none; }
+    }
+
+    /* drag handle */
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 99px;
+      margin: 12px auto 28px;
+    }
+
+    .modal-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      padding: 0 24px;
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.45);
+      padding: 0 24px;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* Input field */
+    .modal-input-wrap {
+      position: relative;
+      margin: 0 24px 12px;
+    }
+
+    .modal-input {
+      width: 100%;
+      height: 56px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 0 52px 0 18px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      caret-color: #1f54e8;
+    }
+    .modal-input::placeholder {
+      color: rgba(255,255,255,0.2);
+      font-size: 15px;
+      font-weight: 400;
+    }
+    .modal-input:focus {
+      border-color: rgba(31,84,232,0.6);
+      box-shadow: 0 0 0 3px rgba(31,84,232,0.15),
+                  inset 0 0 20px rgba(31,84,232,0.04);
+    }
+    .modal-input.has-error {
+      border-color: rgba(239,68,68,0.6);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    }
+
+    /* clear button inside input */
+    .modal-input-clear {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+    }
+    .modal-input-wrap.has-value .modal-input-clear {
+      display: flex;
+    }
+
+    /* error message */
+    .modal-error {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(239,68,68,0.9);
+      padding: 0 24px;
+      margin-bottom: 4px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .modal-error.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* hint line */
+    .modal-hint {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+      padding: 0 24px;
+      margin-bottom: 28px;
+    }
+
+    /* Confirm CTA */
+    .modal-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: calc(100% - 48px);
+      margin: 0 24px;
+      height: 52px;
+      background: #1f54e8;
+      border: 1px solid #1a56c2;
+      border-radius: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 2px 2px 5.35px #1074ff;
+      overflow: hidden;
+      transition: opacity 0.15s;
+    }
+    .modal-btn::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      box-shadow: inset 0px -5px 17.1px 0px #00eeff;
+      pointer-events: none;
+    }
+    .modal-btn:hover { opacity: 0.9; }
+
+    /* Cancel link */
+    .modal-cancel {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.3);
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+      transition: color 0.2s;
+    }
+    .modal-cancel:hover { color: rgba(255,255,255,0.6); }
+
+    /* shake animation on error */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+    .modal-input.shake {
+      animation: shake 0.35s ease;
+    }
+
+    .es-hero {
+      padding: 52px 16px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      position: relative;
+      width: 100%;
+    }
+    .es-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='none' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E");
+      background-size: 40px 40px;
+      background-repeat: repeat;
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .es-hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* headerNav — standard from skill (Figma 213:4727) */
+    .es-header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 28px;
+    }
+    .es-back {
+      position: relative;
+      width: 40px; height: 40px;
+      flex-shrink: 0;
+      background: none; border: none;
+      cursor: pointer; padding: 0;
+      display: block;
+    }
+    .es-back img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block; object-fit: cover;
+    }
+    .es-back-fallback {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      border: none; cursor: pointer; color: #fff; flex-shrink: 0;
+    }
+    .es-more-btn {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      flex-shrink: 0; color: #fff;
+    }
+
+    .es-event-info {
+      width: 100%;
+      max-width: 500px;
+      align-self: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .es-thumb {
+      width: 124px;
+      height: 124px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.10);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .es-thumb svg { opacity: 0.3; }
+
+    .es-event-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .es-event-date,
+    .es-event-time {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 16px;
+      color: #fff;
+    }
+    .es-event-date .muted,
+    .es-event-time .muted {
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ── BODY ── */
+    .es-body {
+      padding: 0 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── RESPONSIVE — desktop 768px+ ── */
+    @media (min-width: 768px) {
+      .es-hero { padding: 40px 32px; }
+      .es-header-nav { max-width: 800px; margin: 0 auto; }
+      .es-event-info { max-width: 600px; }
+      .es-body { max-width: 500px; padding: 0 0 64px; }
+      .modal-sheet { max-width: 500px; }
+    }
+
+    /* ── BUTTONS ── */
+    .es-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── PRIMARY BUTTON — 3 states ── */
+    .es-btn-primary-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 52px;
+    }
+
+    .es-btn-primary {
+      position: relative;
+      height: 52px;
+      width: 100%;
+      background: #1f54e8;
+      border: 1px solid #1a56c2;
+      border-radius: 16px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      box-shadow: 2px 2px 5.35px #1074ff;
+      overflow: hidden;
+      /* smooth all transitions */
+      transition:
+        width 0.45s cubic-bezier(0.4,0,0.2,1),
+        border-radius 0.45s cubic-bezier(0.4,0,0.2,1),
+        background 0.35s ease,
+        box-shadow 0.35s ease,
+        border-color 0.35s ease;
+    }
+    .es-btn-primary::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      box-shadow: inset 0px -5px 17.1px 0px #00eeff;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    /* ── STATE: loading — collapses to square pill ── */
+    .es-btn-primary.is-loading {
+      width: 52px;
+      border-radius: 50%;
+      background: #1f54e8;
+      box-shadow: 2px 2px 5.35px #1074ff;
+      cursor: default;
+      overflow: hidden;
+    }
+
+    /* Orbit ring SVG overlay */
+    .btn-orbit {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 52px; height: 52px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      overflow: visible;
+    }
+    .es-btn-primary.is-loading .btn-orbit {
+      opacity: 1;
+    }
+
+    /* The glowing arc path */
+    .orbit-arc {
+      stroke-dasharray: 50 95;
+      stroke-dashoffset: 0;
+    }
+
+    @keyframes orbitSpin {
+      from { stroke-dashoffset: 0; }
+      to   { stroke-dashoffset: -290; }
+    }
+
+    .es-btn-primary.is-loading .orbit-arc {
+      animation: orbitSpin 1.1s cubic-bezier(0.4, 0, 0.6, 1) 2 forwards;
+    }
+
+    /* ── STATE: confirmed — full width, ghost dark ── */
+    .es-btn-primary.is-confirmed {
+      width: 100%;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.08);
+      box-shadow: none;
+      cursor: default;
+    }
+    .es-btn-primary.is-confirmed::after {
+      opacity: 0;
+    }
+
+    /* Label containers */
+    .btn-label-default,
+    .btn-label-loading,
+    .btn-label-confirmed {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      white-space: nowrap;
+    }
+    .btn-label-default  { opacity: 1; transform: scale(1); }
+    .btn-label-loading  { opacity: 0; transform: scale(0.6); }
+    .btn-label-confirmed{ opacity: 0; transform: scale(0.8); }
+
+    /* Active states */
+    .es-btn-primary.is-loading .btn-label-default   { opacity: 0; transform: scale(0.5); }
+    .es-btn-primary.is-loading .btn-label-loading   { opacity: 1; transform: scale(1); }
+    .es-btn-primary.is-loading .btn-label-confirmed { opacity: 0; }
+
+    .es-btn-primary.is-confirmed .btn-label-default  { opacity: 0; transform: scale(0.5); }
+    .es-btn-primary.is-confirmed .btn-label-loading  { opacity: 0; }
+    .es-btn-primary.is-confirmed .btn-label-confirmed{ opacity: 1; transform: scale(1); }
+
+    /* Trim-path check animation */
+    @keyframes drawOutside {
+      from { stroke-dashoffset: 120; opacity: 0; }
+      8%   { opacity: 1; }
+      to   { stroke-dashoffset: 0; opacity: 1; }
+    }
+    @keyframes drawInside {
+      from { stroke-dashoffset: 14; }
+      to   { stroke-dashoffset: 0; }
+    }
+    @keyframes popIn {
+      0%   { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+      65%  { transform: scale(1.18) rotate(4deg);  opacity: 1; }
+      100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
+    }
+    .btn-check-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* reset state */
+    .btn-check-svg .check-outside {
+      stroke-dasharray: 120;
+      stroke-dashoffset: 120;
+      opacity: 0;
+    }
+    .btn-check-svg .check-inside {
+      stroke-dasharray: 14;
+      stroke-dashoffset: 14;
+    }
+    /* active animations */
+    .es-btn-primary.is-loading .btn-check-svg {
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .es-btn-primary.is-loading .btn-check-svg .check-outside {
+      animation: drawOutside 0.55s ease 0.1s forwards;
+    }
+    .es-btn-primary.is-loading .btn-check-svg .check-inside {
+      animation: drawInside 0.35s ease 0.52s forwards;
+    }
+
+    /* Shimmer sweep on confirmed */
+    @keyframes shimmer {
+      0%   { left: -100%; }
+      100% { left: 200%; }
+    }
+    .es-btn-primary.is-confirmed .btn-shimmer {
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+      animation: shimmer 1.8s ease 1 forwards;
+      pointer-events: none;
+    }
+    .btn-shimmer { display: none; }
+    .es-btn-primary.is-confirmed .btn-shimmer { display: block; }
+
+    .es-btn-secondary {
+      width: 100%;
+      position: relative;
+      background-color: rgba(31,84,232,0.1);
+      border: 1px solid #1f54e8;
+      border-radius: 16px;
+      padding: 0 12px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #d0eeff;
+      overflow: hidden;
+      transition: opacity 0.15s;
+    }
+    .es-btn-secondary:hover { opacity: 0.85; }
+
+    /* Gradient border via pseudo — top edge glows blue by default, fades on press */
+    .es-btn-secondary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 1px;
+      background: linear-gradient(
+        180deg,
+        var(--sec-border-top, rgba(31, 148, 232, 0.55)) 0%,
+        var(--sec-border-bot, rgba(35, 35, 35, 0.9))   100%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      transition: opacity 0.45s ease;
+    }
+
+    .es-plus-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ── INFO CARDS ── */
+    .es-info-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .es-card {
+      width: 100%;
+      border: none;
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+    .es-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      padding: 1px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(153,153,153,0.10) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .es-card-head {
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-radius: 8px 8px 0 0;
+    }
+    .es-card-head span {
+      font-size: 14px;
+      color: #fff;
+    }
+    .es-chevron { color: rgba(255,255,255,0.6); }
+
+    .es-card-body {
+      background: rgba(255,255,255,0.02);
+      padding: 24px 16px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    /* ── DETAIL ROWS ── */
+    .es-detail-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .es-detail-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .es-detail-row.center { align-items: center; }
+
+    .es-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* Icon container — SVGs are 32×32 self-contained with bg rect built in */
+    .es-icon-wrap {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .es-detail-text {
+      font-size: 14px;
+      color: #fff;
+      line-height: 1.4;
+    }
+    .es-detail-text.underline { text-decoration: underline; }
+
+    .es-euro-icon {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: #8e8e8e;
+      line-height: 1;
+    }
+
+    .es-desc-block {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .es-desc-text {
+      font-size: 14px;
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    .es-admin {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .es-admin-av {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .es-admin-name { font-size: 14px; color: #fff; }
+
+    /* ── PLAYERS CARD ── */
+    .es-players-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .es-avatar-stack {
+      display: flex;
+      align-items: center;
+    }
+    .es-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-right: -8px;
+      border: 1.5px solid #171717;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.15);
+    }
+    .es-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .es-avatar-more {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #282828;
+      border: 1px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .es-spots-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .es-spots-main { font-size: 16px; color: #fff; }
+    .es-spots-sub  { font-size: 14px; color: rgba(255,255,255,0.5); }
+
+    .es-progress-track {
+      height: 4px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.20);
+      overflow: hidden;
+    }
+    @keyframes avatarBounceIn {
+      0%   { transform: scale(0) rotate(80deg); opacity: 0; }
+      60%  { transform: scale(1.1) rotate(-5deg); opacity: 1; }
+      80%  { transform: scale(0.95) rotate(3deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .es-avatar-new.is-visible {
+      display: flex !important;
+      animation: avatarBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .es-progress-fill {
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #1f54e8 0%, #15f7ff 46.6%, #15adff 100%);
+      width: 82%;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Share Match modal ── */
+    .share-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .share-modal-backdrop.is-open { opacity: 1; pointer-events: all; }
+    .share-modal-sheet {
+      width: 100%; max-width: 500px;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: rgba(28,28,28,0.80);
+      backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      border-radius: 24px 24px 0 0;
+      padding: 32px 24px 48px;
+      display: flex; flex-direction: column; align-items: center; gap: 24px;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.34,1.1,0.64,1);
+    }
+    .share-modal-backdrop.is-open .share-modal-sheet { transform: translateY(0); }
+    @media (min-width: 768px) {
+      .share-modal-backdrop { align-items: center; }
+      .share-modal-sheet {
+        max-width: 406px;
+        background: rgba(28,28,28,0.60);
+        backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+        border: 1px solid #323232;
+        border-radius: 24px;
+        padding: 32px 24px 32px;
+        transform: translateY(16px) scale(0.97);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1), opacity 0.3s ease;
+      }
+      .share-modal-backdrop.is-open .share-modal-sheet { transform: translateY(0) scale(1); opacity: 1; }
+      .share-handle { display: none; }
+    }
+    .share-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 99px; align-self: center; flex-shrink: 0; }
+    .share-icon-wrap { width: 94px; height: 70px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .share-icon-wrap img { position: absolute; width: 250.63%; height: 214.36%; left: -64.71%; top: -57.18%; object-fit: cover; }
+    .share-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: #fff; text-align: center; }
+    .share-sub { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); text-align: center; line-height: 1.5; }
+    .share-link-box { display: flex; align-items: center; width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; }
+    .share-link-text { flex: 1; padding: 14px; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .share-copy-btn { background: #1f54e8; border: none; padding: 15px 18px; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s, background 0.2s; }
+    .share-copy-btn:hover { opacity: 0.85; }
+    .share-copy-btn.copied { background: #14e48e; color: #0a0a0a; }
+    .share-apps { display: flex; gap: 24px; align-items: center; justify-content: center; width: 100%; }
+    .share-chip { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; background: none; border: none; }
+    .share-chip-icon { width: 52px; height: 52px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+    .share-chip:hover .share-chip-icon { background: rgba(255,255,255,0.10); }
+    .share-chip-label { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); }
+    .share-done-btn { width: 100%; height: 52px; background: rgba(31,84,232,0.1); border: 1px solid #1f54e8; border-radius: 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600; color: #d0eeff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; }
+    .share-done-btn:hover { opacity: 0.85; }
+
+    /* ── Create Teams modal ── */
+    .teams-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .teams-modal-backdrop.is-open { opacity: 1; pointer-events: all; }
+    .teams-modal-sheet {
+      width: 100%; max-width: 500px;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: rgba(28,28,28,0.80);
+      backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      border-radius: 24px 24px 0 0;
+      padding: 32px 24px 48px;
+      display: flex; flex-direction: column; align-items: center; gap: 24px;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.34,1.1,0.64,1);
+    }
+    .teams-modal-backdrop.is-open .teams-modal-sheet { transform: translateY(0); }
+    @media (min-width: 768px) {
+      .teams-modal-backdrop { align-items: center; }
+      .teams-modal-sheet {
+        max-width: 406px;
+        background: rgba(28,28,28,0.60);
+        backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+        border: 1px solid #323232;
+        border-radius: 24px;
+        padding: 32px 24px 32px;
+        transform: translateY(16px) scale(0.97);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1), opacity 0.3s ease;
+      }
+      .teams-modal-backdrop.is-open .teams-modal-sheet { transform: translateY(0) scale(1); opacity: 1; }
+      .teams-handle { display: none; }
+    }
+    .teams-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 99px; align-self: center; flex-shrink: 0; }
+
+    /* Teams modal image */
+    .teams-icon-wrap { width: 157px; height: 96px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .teams-icon-wrap img { position: absolute; width: 223.67%; height: 232.88%; left: -61.83%; top: -62.35%; object-fit: cover; }
+
+    /* Title / subtitle */
+    .teams-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: #fff; text-align: center; }
+    .teams-sub { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); text-align: center; }
+    .teams-spots { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #fff; text-align: center; width: 100%; }
+
+    /* Team rows */
+    .teams-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .team-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 12px 14px;
+      height: 64px;
+    }
+    .team-row-left { display: flex; align-items: center; gap: 10px; }
+    .team-colour-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .team-name-wrap { display: flex; flex-direction: column; gap: 2px; }
+    .team-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap; }
+    .team-slots-lbl { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; color: rgba(255,255,255,0.4); }
+    /* Stepper */
+    .team-stepper { display: flex; align-items: center; gap: 8px; }
+    .stepper-btn {
+      width: 32px; height: 32px; border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.8);
+      user-select: none; transition: background 0.15s;
+    }
+    .stepper-btn:hover { background: rgba(255,255,255,0.10); }
+    .stepper-val { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: #fff; min-width: 24px; text-align: center; }
+
+    /* Add Team row */
+    .add-team-row {
+      height: 64px; width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .add-team-row:hover { background: rgba(255,255,255,0.06); }
+    .add-team-lbl { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.4); }
+
+    /* Buttons */
+    .teams-done-btn {
+      width: 100%; height: 52px;
+      background: rgba(31,84,232,0.1); border: 1px solid #1f54e8;
+      border-radius: 16px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px; font-weight: 600; color: #d0eeff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s;
+    }
+    .teams-done-btn:hover { opacity: 0.85; }
+    .teams-close-btn {
+      width: 100%; padding: 16px;
+      background: none; border: none; border-radius: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px; font-weight: 600; color: #fff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s;
+    }
+    .teams-close-btn:hover { opacity: 0.6; }
+
+    /* ── Toast — Figma 238:7134 ── */
+    .toast {
+      position: fixed;
+      bottom: -120px;
+      left: 50%; transform: translateX(-50%);
+      width: calc(100% - 32px); max-width: 468px;
+      background: linear-gradient(0deg, rgba(20,228,142,0.1) 0%, rgba(0,0,0,0) 100%),
+                  linear-gradient(90deg, rgba(23,23,23,0.9) 0%, rgba(23,23,23,0.9) 100%);
+      backdrop-filter: blur(9.3px); -webkit-backdrop-filter: blur(9.3px);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px; padding: 12px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 200;
+      transition: bottom 0.4s cubic-bezier(0.34,1.1,0.64,1);
+    }
+    .toast.is-visible { bottom: 32px; }
+    .toast-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .toast-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600; color: #fff; line-height: 1.2; }
+    .toast-close { width: 20px; height: 20px; background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; opacity: 0.7; transition: opacity 0.15s; }
+    .toast-close:hover { opacity: 1; }
+    .toast-body { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 400; color: #fff; line-height: 1.2; }
+    .toast-progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden; }
+    .toast-progress-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #39e81f 0%, #15ffc0 46.6%, #318507 100%); width: 100%; transition: width linear; }
+</style>
+</head>
+<body>
+
+<div class="es-root">
+
+  <!-- HERO -->
+  <div class="es-hero">
+
+    <!-- headerNav — standard from skill (Figma 213:4727) -->
+    <div class="es-header-nav">
+      <button class="es-back" aria-label="Back" onclick="location.href='homepageUser.html'">
+        <img src="https://www.figma.com/api/mcp/asset/3ae75996-3fb9-481b-91e6-ef1716b62841" alt="Back"
+             onerror="this.parentElement.innerHTML='<button class=\'es-back-fallback\' onclick=\'location.href=\'\''homepageUser.html\'\''>\'><svg width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\'><path d=\'M15 18L9 12L15 6\' stroke=\'white\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/></svg></button>'"/>
+      </button>
+      <button class="es-more-btn" aria-label="More options">
+        <svg width="4" height="18" viewBox="0 0 4 18" fill="none">
+          <circle cx="2" cy="2"  r="2" fill="white"/>
+          <circle cx="2" cy="9"  r="2" fill="white"/>
+          <circle cx="2" cy="16" r="2" fill="white"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="es-event-info">
+      <!-- hidden file input for dynamic upload -->
+      <input type="file" id="thumbInput" accept="image/*" style="display:none;" />
+
+      <div class="es-thumb" id="eventThumb" style="padding:0;overflow:hidden;cursor:pointer;" onclick="document.getElementById('thumbInput').click()">
+        <img id="thumbImg" src="data:image/png;base64,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" alt="Event" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;" />
+      </div>
+
+      <div class="es-event-name">Event Name</div>
+
+      <div class="es-event-date">
+        <span>📆</span>
+        <span>Wednesday</span>
+        <span class="muted">16/05/26</span>
+      </div>
+
+      <div class="es-event-time">
+        <span>⏱️</span>
+        <span>5pm</span>
+        <span class="muted">1h30min</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="es-body">
+
+    <!-- CTA Buttons -->
+    <div class="es-btn-group">
+      <div class="es-btn-primary-wrap">
+        <button class="es-btn-primary" id="btnPrimary" onclick="handlePrimaryClick()">
+          <!-- shimmer for confirmed state -->
+          <div class="btn-shimmer"></div>
+
+          <!-- Orbit ring — trim-path glow for loading state -->
+          <svg class="btn-orbit" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="orbitBlur" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1.2"/>
+              </filter>
+            </defs>
+            <!-- Cyan blurred glow arc -->
+            <circle class="orbit-arc" cx="26" cy="26" r="23"
+              stroke="#00eeff" stroke-width="3"
+              stroke-linecap="round"
+              fill="none"
+              filter="url(#orbitBlur)"
+              opacity="0.9"
+            />
+            <!-- White sharp arc on top, same behaviour -->
+            <circle class="orbit-arc" cx="26" cy="26" r="23"
+              stroke="#ffffff" stroke-width="1.2"
+              stroke-linecap="round"
+              fill="none"
+              opacity="0.85"
+            />
+          </svg>
+          </svg>
+
+          <!-- State: Default -->
+          <div class="btn-label-default">
+            Invite Squad
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+
+          <!-- State: Loading — Outside + Inside trim-path animation -->
+          <div class="btn-label-loading">
+            <div class="btn-check-wrap">
+              <!-- viewBox matches the component: 16x16, Outside at x:2 y:2 w:12 h:12, Inside at x:5.93 y:6.96 w:4 h:2.67 -->
+              <svg class="btn-check-svg" width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Outside: starburst badge — placed at offset 2,2 within 16x16 -->
+                <path class="check-outside"
+                  transform="translate(2, 2)"
+                  d="M 7.6446733474731445 0.999527096748352 L 6.830697536468506 0.30586206912994385 C 6.3521488308906555 -0.10195401310920715 5.647856563329697 -0.10195401310920715 5.169308185577393 0.30586206912994385 L 4.355233192443848 0.9995466470718384 C 4.15016396343708 1.1743053048849106 3.8951729238033295 1.2798717431724072 3.626594066619873 1.3013044595718384 L 2.5613651275634766 1.3862653970718384 C 1.9346108436584473 1.4362808428704739 1.436116099357605 1.9339900612831116 1.3861006498336792 2.560744285583496 L 1.3008161783218384 3.6268253326416016 C 1.2793833799660206 3.8954041600227356 1.1745089888572693 4.1502717435359955 0.9997503161430359 4.355340957641602 L 0.3057664632797241 5.169467926025391 C -0.10204964876174927 5.648016273975372 -0.10185837745666504 6.351726859807968 0.30595773458480835 6.830275535583496 L 0.9993171095848083 7.644402503967285 C 1.1740757822990417 7.849471718072891 1.279967624694109 8.104339301586151 1.3014004230499268 8.372918128967285 L 1.3866870403289795 9.43899917602539 C 1.4367024898529053 10.065753281116486 1.9337608814239502 10.563463531434536 2.5605151653289795 10.613478660583496 L 3.6269214153289795 10.698439598083496 C 3.895500272512436 10.71987183764577 4.150368049740791 10.825438514351845 4.355437278747559 11.000197410583496 L 5.169239044189453 11.693902015686035 C 5.6477877497673035 12.101717293262482 6.3521488308906555 12.101632744073868 6.830697536468506 11.693816184997559 L 7.644499778747559 11.000134468078613 C 7.849569007754326 10.825375571846962 8.104437500238419 10.719997722655535 8.373016357421875 10.698565483093262 L 9.439421653747559 10.613480567932129 C 10.066175818443298 10.563465438783169 10.563234008848667 10.065632164478302 10.613249778747559 9.438878059387207 L 10.69853687286377 8.372849464416504 C 10.719969114288688 8.10427063703537 10.825861930847168 7.8491837084293365 11.00062084197998 7.6441144943237305 L 11.69398021697998 6.83023738861084 C 12.10179552435875 6.351688712835312 12.101728767156601 5.647760063409805 11.693913459777832 5.169211387634277 L 11.000555992126465 4.355462074279785 C 10.825797080993652 4.150392860174179 10.719768842682242 3.895402252674103 10.698336601257324 3.6268234252929688 L 10.613577842712402 2.560617446899414 C 10.563562072813511 1.9338632225990295 10.06572949886322 1.4363456927239895 9.43897533416748 1.386330246925354 L 8.372947692871094 1.3013712167739868 C 8.104368835687637 1.2799385003745556 7.849742576479912 1.1742857545614243 7.6446733474731445 0.999527096748352 Z"
+                  stroke="white" stroke-width="0.7" stroke-linejoin="round" fill="none"/>
+                <!-- Inside: tick mark — placed at offset 5.93, 6.96 within 16x16 -->
+                <path class="check-inside"
+                  transform="translate(5.931640625, 6.95880126953125)"
+                  d="M 3.9999990463256836 0 L 1.3333330154418945 2.6666665077209473 L 0 1.3333330154418945"
+                  stroke="white" stroke-width="0.85" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- State: Confirmed -->
+          <div class="btn-label-confirmed">
+            Confirmed
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path transform="translate(2, 2)"
+                d="M 7.6446733474731445 0.999527096748352 L 6.830697536468506 0.30586206912994385 C 6.3521488308906555 -0.10195401310920715 5.647856563329697 -0.10195401310920715 5.169308185577393 0.30586206912994385 L 4.355233192443848 0.9995466470718384 C 4.15016396343708 1.1743053048849106 3.8951729238033295 1.2798717431724072 3.626594066619873 1.3013044595718384 L 2.5613651275634766 1.3862653970718384 C 1.9346108436584473 1.4362808428704739 1.436116099357605 1.9339900612831116 1.3861006498336792 2.560744285583496 L 1.3008161783218384 3.6268253326416016 C 1.2793833799660206 3.8954041600227356 1.1745089888572693 4.1502717435359955 0.9997503161430359 4.355340957641602 L 0.3057664632797241 5.169467926025391 C -0.10204964876174927 5.648016273975372 -0.10185837745666504 6.351726859807968 0.30595773458480835 6.830275535583496 L 0.9993171095848083 7.644402503967285 C 1.1740757822990417 7.849471718072891 1.279967624694109 8.104339301586151 1.3014004230499268 8.372918128967285 L 1.3866870403289795 9.43899917602539 C 1.4367024898529053 10.065753281116486 1.9337608814239502 10.563463531434536 2.5605151653289795 10.613478660583496 L 3.6269214153289795 10.698439598083496 C 3.895500272512436 10.71987183764577 4.150368049740791 10.825438514351845 4.355437278747559 11.000197410583496 L 5.169239044189453 11.693902015686035 C 5.6477877497673035 12.101717293262482 6.3521488308906555 12.101632744073868 6.830697536468506 11.693816184997559 L 7.644499778747559 11.000134468078613 C 7.849569007754326 10.825375571846962 8.104437500238419 10.719997722655535 8.373016357421875 10.698565483093262 L 9.439421653747559 10.613480567932129 C 10.066175818443298 10.563465438783169 10.563234008848667 10.065632164478302 10.613249778747559 9.438878059387207 L 10.69853687286377 8.372849464416504 C 10.719969114288688 8.10427063703537 10.825861930847168 7.8491837084293365 11.00062084197998 7.6441144943237305 L 11.69398021697998 6.83023738861084 C 12.10179552435875 6.351688712835312 12.101728767156601 5.647760063409805 11.693913459777832 5.169211387634277 L 11.000555992126465 4.355462074279785 C 10.825797080993652 4.150392860174179 10.719768842682242 3.895402252674103 10.698336601257324 3.6268234252929688 L 10.613577842712402 2.560617446899414 C 10.563562072813511 1.9338632225990295 10.06572949886322 1.4363456927239895 9.43897533416748 1.386330246925354 L 8.372947692871094 1.3013712167739868 C 8.104368835687637 1.2799385003745556 7.849742576479912 1.1742857545614243 7.6446733474731445 0.999527096748352 Z"
+                stroke="white" stroke-width="0.7" stroke-linejoin="round" fill="none"/>
+              <path transform="translate(5.931640625, 6.95880126953125)"
+                d="M 3.9999990463256836 0 L 1.3333330154418945 2.6666665077209473 L 0 1.3333330154418945"
+                stroke="white" stroke-width="0.85" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+        </button>
+      </div>
+
+      <button class="es-btn-secondary" id="btnSecondary" onclick="openTeamsModal()">
+        <canvas id="diamondCanvas" style="position:absolute;inset:0;width:100%;height:100%;border-radius:16px;pointer-events:none;"></canvas>
+        <span style="position:relative;z-index:1;">Create Teams</span>
+      </button>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="es-info-group">
+
+      <!-- Players Card — first as per infoScreen -->
+      <div class="es-card">
+        <div class="es-card-head">
+          <span>Players</span>
+          <svg class="es-chevron" width="24" height="24" viewBox="0 0 24 24" fill="none" style="transform:rotate(-90deg);">
+            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="es-card-body">
+          <div class="es-players-content">
+
+            <div class="es-avatar-stack" id="avatarStack">
+              <div class="es-avatar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzI1NjNlYiIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5NUjwvdGV4dD4KPC9zdmc+" alt="player" /></div>
+              <div class="es-avatar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzdjM2FlZCIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5KUzwvdGV4dD4KPC9zdmc+" alt="player" /></div>
+              <div class="es-avatar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iI2RiMjc3NyIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5BTDwvdGV4dD4KPC9zdmc+" alt="player" /></div>
+              <div class="es-avatar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iI2Q5NzcwNiIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5USzwvdGV4dD4KPC9zdmc+" alt="player" /></div>
+              <div class="es-avatar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzA1OTY2OSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5GQzwvdGV4dD4KPC9zdmc+" alt="player" /></div>
+              <!-- 6th avatar: the user — hidden until join is confirmed -->
+              <div class="es-avatar es-avatar-new" id="avatarNew" style="display:none;">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzFmNTRlOCIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5NRTwvdGV4dD4KPC9zdmc+" alt="you" />
+              </div>
+            </div>
+
+            <div class="es-spots-row">
+              <span class="es-spots-main" id="spotsCount">(7/15)</span>
+              <span class="es-spots-sub" id="spotsLeft">8 spots left</span>
+            </div>
+
+            <div class="es-progress-track">
+              <div class="es-progress-fill"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Card — second as per infoScreen -->
+      <div class="es-card">
+        <div class="es-card-head">
+          <span>Info</span>
+          <svg class="es-chevron" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="es-card-body">
+          <div class="es-detail-rows">
+
+            <div class="es-detail-row center">
+              <div class="es-icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="white" fill-opacity="0.04"/><path d="M18 12V22M14 20L18 22L22 20V10L18 12M14 20L10 22V12L14 10L18 12M14 20V10" stroke="white" stroke-opacity="0.5" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <span class="es-detail-text underline">Triq I-Universita, 63 &nbsp;–&nbsp; University Pitch</span>
+            </div>
+
+            <div class="es-detail-row center">
+              <div class="es-icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="white" fill-opacity="0.04"/><rect x="9.16601" y="11.8335" width="13.6665" height="8.33323" stroke="#8E8E8E" stroke-width="0.999987"/><path d="M16 11.6667V20.3333" stroke="#8E8E8E" stroke-width="0.999987"/><circle cx="15.9993" cy="16.0001" r="1.33332" fill="#8E8E8E"/></svg>
+              </div>
+              <span class="es-detail-text">5 Aside</span>
+            </div>
+
+            <div class="es-detail-row center">
+              <div class="es-icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="white" fill-opacity="0.04"/><path d="M16.5293 21.7053C15.3169 21.7053 14.3538 21.3484 13.64 20.6347C12.9262 19.9209 12.5693 18.8796 12.5693 17.5107V15.2227C12.5693 14.3427 12.7258 13.5898 13.0387 12.964C13.3613 12.3382 13.816 11.8591 14.4027 11.5267C14.9991 11.1942 15.708 11.028 16.5293 11.028C17.7418 11.028 18.6707 11.3653 19.316 12.04C19.9711 12.7049 20.2987 13.6093 20.2987 14.7533V15.0173H18.7V14.812C18.7 14.1178 18.524 13.5556 18.172 13.1253C17.82 12.6853 17.2724 12.4653 16.5293 12.4653C16.0111 12.4653 15.576 12.5778 15.224 12.8027C14.872 13.0276 14.6031 13.3404 14.4173 13.7413C14.2413 14.1324 14.1533 14.5871 14.1533 15.1053V17.628C14.1533 18.4298 14.3489 19.0702 14.74 19.5493C15.1311 20.0284 15.7276 20.268 16.5293 20.268C17.3018 20.268 17.8542 20.0529 18.1867 19.6227C18.5289 19.1827 18.7 18.6156 18.7 17.9213V17.672H20.2987V17.98C20.2987 19.1142 19.9809 20.0187 19.3453 20.6933C18.7196 21.368 17.7809 21.7053 16.5293 21.7053ZM11.572 17.9507V16.704H16.5V17.9507H11.572ZM11.572 15.8827V14.6507H16.5V15.8827H11.572Z" fill="#8E8E8E"/></svg>
+              </div>
+              <span class="es-detail-text">3.50</span>
+            </div>
+
+            <div class="es-detail-row">
+              <div class="es-icon-wrap" style="align-self:flex-start;flex-shrink:0;">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="white" fill-opacity="0.04"/><path d="M11.334 19.3333H20.6673M11.334 16H20.6673M11.334 12.6666H16.6673" stroke="white" stroke-opacity="0.5" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="es-desc-block">
+                <p class="es-desc-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspas Inu endisse lectus y tortor, asd dignissim situm amet, adipiscing nec, as ultricies sedas and dolor. Cras elementum ultrices e diam. ong Maece muia ligula massa, varius asempas a.</p>
+                <div class="es-admin">
+                  <div class="es-admin-av"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzFmNTRlOCIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IlBsdXMgSmFrYXJ0YSBTYW5zLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIj5NRTwvdGV4dD4KPC9zdmc+" alt="admin" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;"/></div>
+                  <span class="es-admin-name">John Smith</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<canvas id="colorCanvas" style="display:none;"></canvas>
+
+<script>
+  function buildMeshSVG(r, g, b) {
+    const r1 = Math.round(r * 0.84), g1 = Math.round(g * 0.84), b1 = Math.round(b * 0.84);
+    const r2 = Math.round(r * 0.67), g2 = Math.round(g * 0.67), b2 = Math.round(b * 0.67);
+    const r3 = Math.round(r * 0.51), g3 = Math.round(g * 0.51), b3 = Math.round(b * 0.51);
+    const svg = `<svg viewBox='0 0 390 1113' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'>
+      <g transform='matrix(13.56 44.562 -98.765 33.548 59.807 110.88)' opacity='0.20'>
+        <rect height='35.55' width='250.64' fill='url(#grad)' id='quad' shape-rendering='crispEdges'/>
+        <use href='#quad' transform='scale(1 -1)'/>
+        <use href='#quad' transform='scale(-1 1)'/>
+        <use href='#quad' transform='scale(-1 -1)'/>
+      </g>
+      <defs>
+        <linearGradient id='grad' gradientUnits='userSpaceOnUse' x2='5' y2='5'>
+          <stop stop-color='rgba(${r},${g},${b},1)' offset='0'/>
+          <stop stop-color='rgba(${r1},${g1},${b1},0.75)' offset='0.25'/>
+          <stop stop-color='rgba(${r2},${g2},${b2},0.5)' offset='0.5'/>
+          <stop stop-color='rgba(${r3},${g3},${b3},0.25)' offset='0.75'/>
+          <stop stop-color='rgba(23,23,23,0)' offset='1'/>
+        </linearGradient>
+      </defs>
+    </svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  }
+
+  function getDominantColor(imgEl) {
+    const canvas = document.getElementById('colorCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 50; canvas.height = 50;
+    ctx.drawImage(imgEl, 0, 0, 50, 50);
+    const data = ctx.getImageData(0, 0, 50, 50).data;
+
+    // Collect pixels, sort by saturation, average top 100
+    const pixels = [];
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i+1], b = data[i+2];
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      const sat = max === 0 ? 0 : (max - min) / max;
+      pixels.push({ r, g, b, sat });
+    }
+    pixels.sort((a, b) => b.sat - a.sat);
+    const top = pixels.slice(0, 100);
+    const avg = top.reduce((acc, p) => ({ r: acc.r+p.r, g: acc.g+p.g, b: acc.b+p.b }), {r:0,g:0,b:0});
+    return {
+      r: Math.round(avg.r / top.length),
+      g: Math.round(avg.g / top.length),
+      b: Math.round(avg.b / top.length)
+    };
+  }
+
+  function applyGradient(imgEl) {
+    const { r, g, b } = getDominantColor(imgEl);
+    document.querySelector('.es-root').style.backgroundImage = buildMeshSVG(r, g, b);
+  }
+
+  // Apply on load with the existing thumb image
+  const thumbImg = document.getElementById('thumbImg');
+  if (thumbImg.complete) {
+    applyGradient(thumbImg);
+  } else {
+    thumbImg.addEventListener('load', () => applyGradient(thumbImg));
+  }
+
+  // ── Reactive diamond canvas on secondary button ───────────────────────────
+  (function() {
+    const canvas  = document.getElementById('diamondCanvas');
+    const btnP    = document.getElementById('btnPrimary');
+    const btnS    = document.getElementById('btnSecondary');
+    const ctx     = canvas.getContext('2d');
+
+    let animFrame;
+    // Tracked state
+    let currentX        = 0.5;
+    let currentSize     = 1.0;
+    let currentBorder   = 1.0; // 1 = full blue top border, 0 = gone
+    let targetX         = 0.5;
+    let targetSize      = 1.0;
+    let targetBorder    = 1.0;
+
+    function updateBorder(t) {
+      const topAlpha = (0.55 * t).toFixed(3);
+      const botAlpha = (0.55 + (0.35 * (1 - t))).toFixed(3);
+      btnS.style.setProperty('--sec-border-top', `rgba(31, 148, 232, ${topAlpha})`);
+      btnS.style.setProperty('--sec-border-bot', `rgba(35, 35, 35, ${botAlpha})`);
+    }
+
+    function resize() {
+      canvas.width  = btnS.offsetWidth;
+      canvas.height = btnS.offsetHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function drawDiamond(cx, size) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Diamond centre follows horizontal CTA position
+      const gx = cx * w;
+      const gy = h / 2;
+
+      // Radius scales with size — full = spans full width, min = tight spot
+      const rx = w * size * 0.55;
+      const ry = h * size * 2.2;
+
+      // Blue glow radial gradient (diamond shape via scale transform)
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.scale(1, ry / rx); // squash vertically to make diamond ellipse
+
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+      grad.addColorStop(0,    `rgba(31, 148, 232, ${0.35 * size})`);
+      grad.addColorStop(0.35, `rgba(32, 120, 183, ${0.22 * size})`);
+      grad.addColorStop(0.65, `rgba(33,  92, 134, ${0.12 * size})`);
+      grad.addColorStop(0.85, `rgba(34,  64,  85, ${0.05 * size})`);
+      grad.addColorStop(1,    'rgba(36,  36,  36, 0)');
+
+      ctx.beginPath();
+      ctx.arc(0, 0, rx, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function tick() {
+      // Smooth interpolation
+      currentX      += (targetX      - currentX)      * 0.08;
+      currentSize   += (targetSize   - currentSize)   * 0.08;
+      currentBorder += (targetBorder - currentBorder) * 0.06;
+
+      // Snap to zero to fully clear
+      if (Math.abs(currentSize)   < 0.001) currentSize   = 0;
+      if (Math.abs(currentBorder) < 0.001) currentBorder = 0;
+
+      if (currentSize === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      } else {
+        drawDiamond(currentX, currentSize);
+      }
+
+      updateBorder(currentBorder);
+
+      animFrame = requestAnimationFrame(tick);
+    }
+    tick();
+
+    // Observe CTA state changes via MutationObserver
+    const observer = new MutationObserver(() => {
+      if (btnP.classList.contains('is-loading')) {
+        // CTA collapsed to circle — glow disappears completely
+        targetX      = 0.5;
+        targetSize   = 0.0;
+        targetBorder = 0.0;
+      } else if (btnP.classList.contains('is-confirmed')) {
+        // CTA confirmed — keep gradient and border gone
+        targetX      = 0.5;
+        targetSize   = 0.0;
+        targetBorder = 0.0;
+      } else {
+        // Default — full diamond and blue top border
+        targetX      = 0.5;
+        targetSize   = 1.0;
+        targetBorder = 1.0;
+      }
+    });
+    observer.observe(btnP, { attributes: true, attributeFilter: ['class'] });
+  })();
+
+  function handlePrimaryClick() {
+    const btn = document.getElementById('btnPrimary');
+    if (btn.classList.contains('is-loading')) return;
+    if (btn.classList.contains('is-confirmed')) {
+      handleJoin(); // resets the confirmed state
+      return;
+    }
+    openModal();
+  }
+
+  // ── Modal logic ───────────────────────────────────────────────────────────
+  function openModal() {
+    const modal = document.getElementById('matchIdModal');
+    const input = document.getElementById('matchIdInput');
+    modal.classList.add('is-open');
+    setTimeout(() => input.focus(), 420);
+    clearError();
+    input.value = '';
+    document.getElementById('inputWrap').classList.remove('has-value');
+  }
+
+  function closeModal() {
+    document.getElementById('matchIdModal').classList.remove('is-open');
+    document.getElementById('matchIdInput').blur();
+  }
+
+  function handleBackdropClick(e) {
+    if (e.target === document.getElementById('matchIdModal')) closeModal();
+  }
+
+  function handleInput(input) {
+    const val = input.value;
+    document.getElementById('inputWrap').classList.toggle('has-value', val.length > 0);
+    if (val.trim().length >= 2) clearError(); // clear error as user types
+  }
+
+  function clearInput() {
+    const input = document.getElementById('matchIdInput');
+    input.value = '';
+    document.getElementById('inputWrap').classList.remove('has-value');
+    clearError();
+    input.focus();
+  }
+
+  function clearError() {
+    document.getElementById('modalError').classList.remove('is-visible');
+    document.getElementById('matchIdInput').classList.remove('has-error');
+  }
+
+  function showError(msg) {
+    const input = document.getElementById('matchIdInput');
+    document.getElementById('modalErrorText').textContent = msg;
+    input.classList.add('has-error');
+    document.getElementById('modalError').classList.add('is-visible');
+    input.classList.remove('shake');
+    void input.offsetWidth;
+    input.classList.add('shake');
+    setTimeout(() => input.classList.remove('shake'), 400);
+  }
+
+  function confirmMatchId() {
+    const val = document.getElementById('matchIdInput').value.trim();
+    if (val.length < 2) {
+      showError('Please enter your name to continue.');
+      return;
+    }
+    // Store name in sessionStorage so backend can pick it up later
+    sessionStorage.setItem('mh_player_name', val);
+    closeModal();
+    setTimeout(() => handleJoin(), 300);
+  }
+
+  // ── Primary button state machine ──────────────────────────────────────────
+  function handleJoin() {
+    const btn          = document.getElementById('btnPrimary');
+    const avatarNew    = document.getElementById('avatarNew');
+    const progressFill = document.querySelector('.es-progress-fill');
+    const spotsCount   = document.getElementById('spotsCount');
+    const spotsLeft    = document.getElementById('spotsLeft');
+
+    // If confirmed → reset everything to default
+    if (btn.classList.contains('is-confirmed')) {
+      btn.classList.remove('is-confirmed');
+      const svg = btn.querySelector('.btn-check-svg');
+      svg.parentNode.replaceChild(svg.cloneNode(true), svg);
+      // Remove new avatar
+      avatarNew.classList.remove('is-visible');
+      avatarNew.style.display = 'none';
+      // Reset progress + spots
+      progressFill.style.width = '82%';
+      spotsCount.textContent   = '(7/15)';
+      spotsLeft.textContent    = '8 spots left';
+      return;
+    }
+
+    if (btn.classList.contains('is-loading')) return;
+
+    // Restart orbit arcs
+    btn.querySelectorAll('.orbit-arc').forEach(arc => {
+      arc.parentNode.replaceChild(arc.cloneNode(true), arc);
+    });
+
+    // → Loading
+    btn.classList.add('is-loading');
+
+    // → Confirmed after ~950ms
+    setTimeout(() => {
+      btn.classList.remove('is-loading');
+      btn.classList.add('is-confirmed');
+
+      // Show new player avatar with bounce
+      avatarNew.style.display = 'flex';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => avatarNew.classList.add('is-visible'));
+      });
+
+      // Update spots counter
+      spotsCount.textContent = '(8/15)';
+      spotsLeft.textContent  = '7 spots left';
+
+      // Grow progress bar
+      progressFill.style.width = '91%';
+
+    }, 950);
+  }
+
+  document.getElementById('thumbInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      thumbImg.onload = () => applyGradient(thumbImg);
+      thumbImg.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
+
+  <!-- ══════════════════════════════════════════
+       MATCH ID MODAL
+  ══════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="matchIdModal" onclick="handleBackdropClick(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+
+      <div class="modal-title">What's your name?</div>
+      <div class="modal-sub">So other players know who you are. No account needed.</div>
+
+      <div class="modal-input-wrap" id="inputWrap">
+        <input
+          class="modal-input"
+          id="matchIdInput"
+          type="text"
+          placeholder="e.g. John Smith"
+          maxlength="30"
+          autocomplete="name"
+          autocorrect="off"
+          spellcheck="false"
+          oninput="handleInput(this)"
+        />
+        <button class="modal-input-clear" id="inputClear" onclick="clearInput()" tabindex="-1">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-error" id="modalError">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="5" stroke="rgba(239,68,68,0.9)" stroke-width="1.2"/>
+          <path d="M6 3.5V6.5M6 8H6.01" stroke="rgba(239,68,68,0.9)" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <span id="modalErrorText">Please enter your name to continue.</span>
+      </div>
+
+      <div class="modal-hint">Your name will be visible to other players in this match.</div>
+
+      <button class="modal-btn" id="modalConfirmBtn" onclick="confirmMatchId()">
+        Join Match
+      </button>
+
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══ SHARE MATCH MODAL ══ -->
+  <div class="share-modal-backdrop" id="shareModal" onclick="handleShareBackdrop(event)">
+    <div class="share-modal-sheet">
+      <div class="share-handle"></div>
+
+      <!-- Paper plane image from Figma -->
+      <div class="share-icon-wrap">
+        <img src="https://www.figma.com/api/mcp/asset/f8388ad1-59c6-4192-b417-8fefb8e92929" alt="Share"/>
+      </div>
+
+      <!-- Title + subtitle -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;">
+        <div class="share-title">Share Match</div>
+        <div class="share-sub">Share this link with your squad so they can join.</div>
+      </div>
+
+      <!-- Link box -->
+      <div class="share-link-box">
+        <div class="share-link-text" id="shareLink">matchhub.app/join/MH-4821</div>
+        <button class="share-copy-btn" id="shareCopyBtn" onclick="copyShareLink()">Copy</button>
+      </div>
+
+      <!-- App chips -->
+      <div class="share-apps">
+        <button class="share-chip" onclick="shareVia('whatsapp')">
+          <div class="share-chip-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="rgba(255,255,255,0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="share-chip-label">WhatsApp</span>
+        </button>
+        <button class="share-chip" onclick="shareVia('telegram')">
+          <div class="share-chip-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="rgba(255,255,255,0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="share-chip-label">Telegram</span>
+        </button>
+        <button class="share-chip" onclick="shareVia('message')">
+          <div class="share-chip-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="rgba(255,255,255,0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="share-chip-label">Message</span>
+        </button>
+        <button class="share-chip" onclick="shareVia('slack')">
+          <div class="share-chip-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="rgba(255,255,255,0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="share-chip-label">Slack</span>
+        </button>
+      </div>
+
+      <!-- Done -->
+      <button class="share-done-btn" onclick="closeShareModal()">Done</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Share Modal ──
+    function openShareModal() {
+      document.getElementById('shareModal').classList.add('is-open');
+    }
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.remove('is-open');
+      // Clean up URL param without reloading
+      const url = new URL(window.location);
+      url.searchParams.delete('shareModal');
+      window.history.replaceState({}, '', url);
+    }
+    function handleShareBackdrop(e) {
+      if (e.target === document.getElementById('shareModal')) closeShareModal();
+    }
+    function copyShareLink() {
+      const link = document.getElementById('shareLink').textContent;
+      navigator.clipboard.writeText(link).catch(() => {});
+      const btn = document.getElementById('shareCopyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    }
+    function shareVia(platform) {
+      const link = document.getElementById('shareLink').textContent;
+      const urls = {
+        whatsapp: `https://wa.me/?text=${encodeURIComponent('Join my match: ' + link)}`,
+        telegram: `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Join my match!')}`,
+        message:  `sms:?body=${encodeURIComponent('Join my match: ' + link)}`,
+        slack:    `https://slack.com/intl/en-gb/`,
+      };
+      window.open(urls[platform], '_blank');
+    }
+
+    // Override primary button for owner — opens Share modal
+    document.getElementById('btnPrimary').addEventListener('click', function(e) {
+      e.stopImmediatePropagation();
+      openShareModal();
+    }, true);
+
+    // ── Supabase config ──
+    const SUPABASE_URL = 'https://xeqfthmtyanzykcusrfn.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlcWZ0aG10eWFuenlrY3VzcmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTM2NTUsImV4cCI6MjA5NDI2OTY1NX0.sOKYqsiG_woCnKgeZD5AM-FDVJyuAhr22GLdfym5MoQ';
+    const sbHeaders = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+    async function loadMatch() {
+      const params = new URLSearchParams(window.location.search);
+      const matchId = params.get('match') || localStorage.getItem('mh_current_match');
+      if (!matchId) return;
+
+      localStorage.setItem('mh_current_match', matchId);
+
+      // Update share link
+      const shareLink = `${location.origin}${location.pathname.replace('eventScreenOwner.html','eventScreenPlayer.html')}?match=${matchId}`;
+      const shareLinkEl = document.getElementById('shareLink');
+      if (shareLinkEl) shareLinkEl.textContent = shareLink;
+
+      try {
+        // Load match data
+        const mRes = await fetch(`${SUPABASE_URL}/rest/v1/matches?id=eq.${matchId}&select=*`, { headers: sbHeaders });
+        const matches = await mRes.json();
+        const match = matches[0];
+        if (!match) return;
+
+        // Update event info on screen
+        const titleEl = document.querySelector('.es-event-title');
+        if (titleEl) titleEl.textContent = match.name;
+        const dateEl = document.querySelector('.es-event-date');
+        if (dateEl) dateEl.textContent = `${match.date || ''} · ${match.time || ''} · ${match.location || ''}`;
+
+        // Load players
+        await loadPlayers(matchId, match.max_players);
+      } catch(e) { console.error('Failed to load match:', e); }
+    }
+
+    async function loadPlayers(matchId, maxPlayers) {
+      try {
+        const pRes = await fetch(`${SUPABASE_URL}/rest/v1/players?match_id=eq.${matchId}&order=joined_at.asc`, { headers: sbHeaders });
+        const players = await pRes.json();
+        const count = players.length;
+        const max = maxPlayers || 15;
+
+        // Update player count displays
+        document.querySelectorAll('.es-player-count').forEach(el => {
+          el.textContent = `${count}/${max}`;
+        });
+        document.querySelectorAll('.es-spots-left').forEach(el => {
+          const left = max - count;
+          el.textContent = `${left} spot${left !== 1 ? 's' : ''} left`;
+        });
+
+        // Update progress bar
+        const pct = Math.min(100, Math.round((count / max) * 100));
+        document.querySelectorAll('.es-progress-fill').forEach(el => {
+          el.style.width = pct + '%';
+        });
+
+        // Update confirmed list in playerList section
+        const confirmedList = document.getElementById('es-confirmed-list');
+        if (confirmedList) {
+          confirmedList.innerHTML = players.map(p => `
+            <div class="es-player-row">
+              <div class="es-player-av">${p.name.charAt(0).toUpperCase()}</div>
+              <span class="es-player-name">${p.name}</span>
+              <span class="es-player-status">Confirmed</span>
+            </div>`).join('');
+        }
+      } catch(e) { console.error('Failed to load players:', e); }
+    }
+
+    // Auto-open share modal if redirected from game creation
+    if (new URLSearchParams(window.location.search).get('shareModal') === 'true') {
+      openShareModal();
+    }
+
+    // Auto-show teams toast if redirected from assignPlayers
+    if (localStorage.getItem('mh_toast') === 'teams') {
+      localStorage.removeItem('mh_toast');
+      showTeamsToast();
+    }
+
+    // Swap secondary button label if teams have already been created
+    if (localStorage.getItem('mh_teams_created') === 'true') {
+      const btn = document.getElementById('btnSecondary');
+      if (btn) btn.querySelector('span').textContent = 'Manage Teams';
+    }
+
+    // Load live match data
+    loadMatch();
+  </script>
+
+  <!-- ══ TEAMS CREATED TOAST ══ -->
+  <div class="toast" id="teamsToast">
+    <div class="toast-header">
+      <span class="toast-title">Teams Created</span>
+      <button class="toast-close" onclick="dismissTeamsToast()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="9" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+          <path d="M7 7l6 6M13 7l-6 6" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <p class="toast-body">The team were created! We wish you an amazing game!</p>
+    <div class="toast-progress-track">
+      <div class="toast-progress-fill" id="toastProgress"></div>
+    </div>
+  </div>
+
+  <script>
+    let toastTimer = null;
+    function showTeamsToast() {
+      const toast = document.getElementById('teamsToast');
+      const fill  = document.getElementById('toastProgress');
+      fill.style.transition = 'none';
+      fill.style.width = '100%';
+      toast.classList.add('is-visible');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fill.style.transition = 'width 10s linear';
+        fill.style.width = '0%';
+      }));
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => dismissTeamsToast(), 10000);
+    }
+    function dismissTeamsToast() {
+      document.getElementById('teamsToast').classList.remove('is-visible');
+      clearTimeout(toastTimer);
+    }
+  </script>
+
+  <!-- ══ CREATE TEAMS MODAL ══ -->
+  <div class="teams-modal-backdrop" id="teamsModal" onclick="handleTeamsBackdrop(event)">
+    <div class="teams-modal-sheet">
+      <div class="teams-handle"></div>
+
+      <!-- 3D people image -->
+      <div class="teams-icon-wrap">
+        <img src="https://www.figma.com/api/mcp/asset/bef441ee-e9a2-4868-99d5-8de3e58b1184" alt="Teams"/>
+      </div>
+
+      <!-- Title + subtitle -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;">
+        <div class="teams-title">Create the teams</div>
+        <div class="teams-sub">Set team sizes then confirm.</div>
+      </div>
+
+      <!-- Spots remaining -->
+      <div class="teams-spots" id="spotsLabel">5 spots remaining</div>
+
+      <!-- Team rows -->
+      <div class="teams-list" id="teamsList"></div>
+
+      <!-- Buttons -->
+      <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+        <button class="teams-done-btn" onclick="confirmTeams()">Done</button>
+        <button class="teams-close-btn" onclick="closeTeamsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Create Teams Modal ──────────────────────────────────
+    const TEAM_DEFS = [
+      { name: 'Team Black', color: '#3a3a3a', slots: 5 },
+      { name: 'Team White', color: '#e0e0e0', slots: 5 },
+    ];
+    const MAX_SLOTS = 15;
+    const MIN_SLOTS = 1;
+    const TOTAL_PLAYERS = 15;
+
+    let teams = TEAM_DEFS.map(t => ({ ...t }));
+
+    function slotsAssigned() { return teams.reduce((s, t) => s + t.slots, 0); }
+    function spotsRemaining() { return Math.max(0, TOTAL_PLAYERS - slotsAssigned()); }
+
+    function openTeamsModal() {
+      renderTeamsList();
+      document.getElementById('teamsModal').classList.add('is-open');
+    }
+    function closeTeamsModal() {
+      document.getElementById('teamsModal').classList.remove('is-open');
+    }
+    function handleTeamsBackdrop(e) {
+      if (e.target === document.getElementById('teamsModal')) closeTeamsModal();
+    }
+
+    function renderTeamsList() {
+      const list = document.getElementById('teamsList');
+      const spots = spotsRemaining();
+      document.getElementById('spotsLabel').textContent = spots + ' spot' + (spots !== 1 ? 's' : '') + ' remaining';
+
+      list.innerHTML = teams.map((t, i) => `
+        <div class="team-row">
+          <div class="team-row-left">
+            <div class="team-colour-dot" style="background:${t.color};border:1.5px solid rgba(255,255,255,0.2);"></div>
+            <div class="team-name-wrap">
+              <span class="team-name">${t.name}</span>
+              <span class="team-slots-lbl">${t.slots} slot${t.slots !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <div class="team-stepper">
+            <button class="stepper-btn" onclick="changeSlots(${i}, -1)">−</button>
+            <span class="stepper-val">${t.slots}</span>
+            <button class="stepper-btn" onclick="changeSlots(${i}, 1)">+</button>
+          </div>
+        </div>
+      `).join('') + `
+        <div class="add-team-row" onclick="addTeam()">
+          <span class="add-team-lbl">+ Add Team</span>
+        </div>`;
+    }
+
+    function changeSlots(index, delta) {
+      const newVal = teams[index].slots + delta;
+      // Adding a slot: only allow if there are spots left
+      if (delta > 0 && spotsRemaining() <= 0) return;
+      // Removing last slot from an added team (index >= 2): delete the team
+      if (index >= 2 && newVal < MIN_SLOTS) {
+        teams.splice(index, 1);
+      } else {
+        teams[index].slots = Math.max(MIN_SLOTS, Math.min(MAX_SLOTS, newVal));
+      }
+      renderTeamsList();
+    }
+
+    function addTeam() {
+      // Only add if there's at least 1 spot remaining to assign
+      if (spotsRemaining() <= 0) return;
+      const colours = ['#1f54e8','#ef4444','#14e48e','#f59e0b','#8b5cf6'];
+      const names   = ['Team Blue','Team Red','Team Green','Team Gold','Team Purple'];
+      const idx = teams.length - 2;
+      // New team starts with 1 slot — deducted immediately from spots remaining
+      teams.push({ name: names[idx % names.length] || `Team ${teams.length + 1}`, color: colours[idx % colours.length], slots: 1 });
+      renderTeamsList();
+    }
+
+    function confirmTeams() {
+      // Save team config so assignPlayers.html can read it
+      sessionStorage.setItem('mh_teams', JSON.stringify(teams));
+      closeTeamsModal();
+      window.location.href = 'assignPlayers.html';
+    }
+  </script>
+
+</body>
+</html>
