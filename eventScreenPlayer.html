@@ -1148,11 +1148,14 @@
 
   // Apply on load with the existing thumb image
   const thumbImg = document.getElementById('thumbImg');
+
+if (thumbImg) {
   if (thumbImg.complete) {
     applyGradient(thumbImg);
   } else {
     thumbImg.addEventListener('load', () => applyGradient(thumbImg));
   }
+}
 
   // ── Reactive diamond canvas on secondary button ───────────────────────────
   (function() {
