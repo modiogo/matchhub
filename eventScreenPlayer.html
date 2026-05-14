@@ -1479,7 +1479,10 @@ if (thumbImg) {
     }, 950);
   }
 
-  document.getElementById('thumbInput').addEventListener('change', function(e) {
+ const thumbInput = document.getElementById('thumbInput');
+
+if (thumbInput) {
+  thumbInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
